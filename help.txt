@@ -1,0 +1,100 @@
+pipenv shell
+pipenv install graphene
+
+resolve_hello - is written in snake case
+/////////////////////////
+result = schema.execute(
+    '''
+    {
+      hello
+    }
+    '''
+)
+/////////////////////////
+schema = graphene.Schema(query=Query, mutation=Mutation)
+
+result = schema.execute(
+    '''
+    {
+      isAdmin
+    }
+    '''
+)
+/////////////////////////
+schema = graphene.Schema(query=Query, auto_camelcase=False)
+
+result = schema.execute(
+    '''
+    {
+      is_admin
+    }
+    '''
+)
+////////////////////////
+result = schema.execute(
+    '''
+    {
+      users(limit: 2) {
+        id
+        username
+        createdAt
+      }
+    }
+    '''
+)
+////////////////////////
+result = schema.execute(
+    '''
+    mutation {
+      createUser(username: "Andriy") {
+        user {
+          id
+          username
+          createdAt
+        }
+      }
+    }
+    '''
+)
+////////////////////////
+result = schema.execute(
+    '''
+    query getUsersQuery ($limit: Int) {
+      users(limit: $limit) {
+        id
+        username
+        createdAt
+      }
+    }
+    ''',
+    variable_values = { "limit": 1 }
+)
+////////////////////////
+class CreatePost(graphene.Mutation):
+    post = graphene.Field(Post)
+
+    class Arguments:
+        title = graphene.String()
+        content = graphene.String()
+
+    def mutate(self, info, title, content):
+        if info.context.get("is_anonymous"):
+            raise Exception("Not authenticated!")
+        post = Post(title=title, content=content)
+        return CreatePost(post=post)
+
+result = schema.execute(
+    '''
+    mutation {
+      createPost(title: "Hello", content: "World") {
+        post {
+          title
+          content
+        }
+      }
+    }
+    ''',
+    context={ "is_anonymous": True }
+    # variable_values = { "limit": 1 }
+)
+////////////////////////
